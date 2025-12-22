@@ -13,18 +13,23 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
 
-    const { createClient } = await import("@/utils/supabase/client");
-    const supabase = createClient();
+    try {
+      const { createClient } = await import("@/utils/supabase/client");
+      const supabase = createClient();
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    if (!authError) {
-      router.push("/admin");
-    } else {
-      setError(authError.message);
+      if (!authError) {
+        router.push("/admin");
+      } else {
+        setError(authError.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError("Error de sistema: " + (err.message || "Revisa la consola"));
     }
   };
 

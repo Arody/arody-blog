@@ -102,13 +102,30 @@ export default function PostEditor({ initialData }: PostEditorProps) {
         const { createClient } = await import("@/utils/supabase/client");
         const supabase = createClient();
 
+        // 1. Check if image changed and delete old one
+        if (initialData?.coverImage && formData.coverImage !== initialData.coverImage) {
+            try {
+                // Extract filename from URL: .../uploads/filename.webp
+                const oldUrlParts = initialData.coverImage.split('/');
+                const oldFilename = oldUrlParts[oldUrlParts.length - 1];
+
+                if (oldFilename) {
+                    console.log("Deleting old image:", oldFilename);
+                    await supabase.storage.from('uploads').remove([oldFilename]);
+                }
+            } catch (cleanupErr) {
+                console.warn("Failed to cleanup old image:", cleanupErr);
+                // Continue saving even if cleanup fails
+            }
+        }
+
         const postPayload = {
             title: formData.title,
             slug: formData.slug,
             excerpt: formData.excerpt,
             date: formData.date,
             content: formData.content,
-            cover_image: formData.coverImage, // Snake case for DB
+            cover_image: formData.coverImage, // Ensure Snake case for DB
             updated_at: new Date().toISOString()
         };
 
@@ -152,10 +169,17 @@ export default function PostEditor({ initialData }: PostEditorProps) {
         const query = supabase.from('posts').delete();
 
         const { error } = initialData?.id
-            ? await query.eq('id', initialData.id)
+            ? await query.eq('id', initialData.id) 
             : await query.eq('slug', formData.slug);
 
         if (!error) {
+            // Cleanup image on delete as well
+            if (formData.coverImage) {
+                const parts = formData.coverImage.split('/');
+                const filename = parts[parts.length - 1];
+                if (filename) await supabase.storage.from('uploads').remove([filename]);
+            }
+
             router.push('/admin');
             router.refresh();
         } else {
