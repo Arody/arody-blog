@@ -9,7 +9,7 @@ export default async function BlogIndex() {
 
   return (
     <div className="container py-12">
-      <h1 className="text-4xl text-center mb-12">All Stories</h1>
+      <h1 className="text-4xl text-center mb-12">Historias</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
         {posts.map((post) => (
@@ -25,7 +25,7 @@ export default async function BlogIndex() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-[var(--border)] uppercase tracking-widest">
-                    No Image
+                      Sin Imagen
                   </div>
                 )}
               </div>

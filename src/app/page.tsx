@@ -14,7 +14,7 @@ export default async function Home() {
         <div className="relative w-full h-[60vh] bg-gray-100 flex items-center justify-center overflow-hidden mb-8 group">
            {/* Placeholder for a hero image if we had one. For now, a typographic hero. */}
            <div className="z-10 bg-white/80 p-12 backdrop-blur-sm border border-[var(--foreground)]">
-            <h2 className="text-5xl md:text-7xl mb-4 italic">La Edición de Septiembre</h2>
+            <h2 className="text-5xl md:text-7xl mb-4 italic">La Edición de {new Date().getMonth() + 1 }</h2>
             <p className="uppercase tracking-widest text-sm">Historias visuales curadas</p>
            </div>
         </div>
