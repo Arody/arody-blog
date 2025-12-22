@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import BlockEditor from "./BlockEditor";
 
 interface PostEditorProps {
     initialData?: {
@@ -211,9 +212,13 @@ export default function PostEditor({ initialData }: PostEditorProps) {
             </div>
 
             <div className="space-y-4">
-                <label>Contenido (Soporta HTML)</label>
-                <textarea name="content" value={formData.content} onChange={handleChange} rows={15} required className="w-full bg-transparent border border-gray-200 p-4 focus:outline-none focus:border-black transition font-mono text-sm" placeholder="Blog de <mark>prueba</mark>" />
-                <p className="text-xs text-gray-400">Usa etiquetas HTML simples. &lt;p&gt;, &lt;h2&gt;, &lt;img src=&quot;...&quot;&gt;</p>
+                <label>Contenido</label>
+                <div className="border border-gray-200 rounded-lg p-4 min-h-[400px]">
+                    <BlockEditor
+                        initialContent={initialData?.content || ""}
+                        onChange={useCallback((html: string) => setFormData((prev: any) => ({ ...prev, content: html })), [])}
+                    />
+                </div>
             </div>
 
             <div className="space-y-4">
