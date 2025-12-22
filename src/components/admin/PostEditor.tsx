@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 interface PostEditorProps {
     initialData?: {
+        id?: string;
         title: string;
         slug: string;
         excerpt: string;
@@ -18,6 +18,7 @@ interface PostEditorProps {
 export default function PostEditor({ initialData }: PostEditorProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState<string>("");
     const [formData, setFormData] = useState({
         title: initialData?.title || "",
         slug: initialData?.slug || "",
@@ -41,21 +42,56 @@ export default function PostEditor({ initialData }: PostEditorProps) {
         if (!e.target.files?.[0]) return;
         
         const file = e.target.files[0];
-        const data = new FormData();
-        data.append('file', file);
+        setUploadStatus("Optimizando imagen...");
 
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: data
-            });
-            const json = await res.json();
-            if (json.success) {
-                setFormData(prev => ({ ...prev, coverImage: json.url }));
-            }
-        } catch (err) {
-            alert("Upload failed");
-            console.error(err);
+            // Dynamic import to avoid SSR issues with browser libraries
+            const imageCompression = (await import("browser-image-compression")).default;
+
+            const options = {
+                maxSizeMB: 0.5, // Max 500KB
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+                fileType: "image/webp"
+            };
+
+            const compressedFile = await imageCompression(file, options);
+
+            // Generate unique filename with .webp extension
+            const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
+
+            setUploadStatus("Subiendo a la nube...");
+
+            const { createClient } = await import("@/utils/supabase/client");
+            const supabase = createClient();
+
+            const { data, error } = await supabase.storage
+                .from('uploads')
+                .upload(filename, compressedFile, {
+                    contentType: 'image/webp',
+                    upsert: false // Don't overwrite
+                });
+
+            if (error) throw error;
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('uploads')
+                .getPublicUrl(filename);
+
+            setFormData(prev => ({ ...prev, coverImage: publicUrl }));
+            setUploadStatus(""); // Clear status on success
+
+        } catch (err: any) {
+            console.error("Upload error details:", err);
+            setUploadStatus(""); // Clear status on error
+
+            let message = err.message || "Error desconocido";
+            if (err.statusCode === 0) message = "Error de Red/CORS. Revisa Supabase.";
+            if (err.statusCode === 403) message = "Permiso Denegado.";
+            if (err.statusCode === 404) message = "Bucket no encontrado.";
+
+            alert(`Fallo en la subida: ${message}`);
         }
     };
 
@@ -63,93 +99,127 @@ export default function PostEditor({ initialData }: PostEditorProps) {
         e.preventDefault();
         setLoading(true);
 
-        const method = initialData ? 'PUT' : 'POST';
-        const url = initialData ? `/api/posts/${initialData.slug}` : '/api/posts';
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+
+        const postPayload = {
+            title: formData.title,
+            slug: formData.slug,
+            excerpt: formData.excerpt,
+            date: formData.date,
+            content: formData.content,
+            cover_image: formData.coverImage, // Snake case for DB
+            updated_at: new Date().toISOString()
+        };
 
         try {
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            
-            if (res.ok) {
-                router.push('/admin');
-                router.refresh();
+            let error;
+
+            if (initialData?.id) {
+                // UPDATE
+                const result = await supabase
+                    .from('posts')
+                    .update(postPayload)
+                    .eq('id', initialData.id);
+                error = result.error;
             } else {
-                alert("Error saving post");
+                // CREATE
+                const result = await supabase
+                    .from('posts')
+                    .insert(postPayload);
+                error = result.error;
             }
-        } catch (err) {
+
+            if (error) throw error;
+
+            router.push('/admin');
+            router.refresh();
+        } catch (err: any) {
             console.error(err);
+            alert("Error al guardar: " + err.message);
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this post?")) return;
-        
-        const res = await fetch(`/api/posts/${formData.slug}`, { method: 'DELETE' });
-        if (res.ok) {
+        if (!confirm("¿Estás seguro de que deseas eliminar esta historia?")) return;
+
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+
+        // Use ID if available, otherwise slug (fallback, though ID is safer)
+        const query = supabase.from('posts').delete();
+
+        const { error } = initialData?.id
+            ? await query.eq('id', initialData.id)
+            : await query.eq('slug', formData.slug);
+
+        if (!error) {
             router.push('/admin');
             router.refresh();
+        } else {
+            alert("Error al eliminar: " + error.message);
         }
     };
 
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8 bg-white p-8 border">
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                    <div>
-                        <label>Title</label>
-                        <input name="title" value={formData.title} onChange={handleChange} required className="text-2xl font-serif" />
-                    </div>
-                    <div>
-                        <label>Slug</label>
-                        <input name="slug" value={formData.slug} onChange={handleChange} required />
-                    </div>
-                    <div>
-                        <label>Date</label>
-                        <input type="date" name="date" value={formData.date} onChange={handleChange} required />
-                    </div>
-                    <div>
-                        <label>Excerpt</label>
-                        <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} rows={3} />
-                    </div>
+                    <label>Título</label>
+                    <input name="title" value={formData.title} onChange={handleChange} required className="w-full bg-transparent border-b border-gray-300 py-2 focus:outline-none focus:border-black transition font-serif text-2xl" placeholder="El Principio" />
                 </div>
-
                 <div className="space-y-4">
-                     <label>Cover Image</label>
-                     <div className="border border-dashed p-8 text-center relative hover:bg-gray-50 transition cursor-pointer">
-                        <input type="file" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                        {formData.coverImage ? (
-                            <img src={formData.coverImage} className="max-h-48 mx-auto" alt="Preview"/>
-                        ) : (
-                            <span className="text-gray-400 text-sm">Click to upload image</span>
-                        )}
-                     </div>
+                    <label>Slug (URL Link)</label>
+                    <input name="slug" value={formData.slug} onChange={handleChange} required className="w-full bg-transparent border-b border-gray-300 py-2 focus:outline-none focus:border-black transition text-gray-500" placeholder="el-principio" />
                 </div>
             </div>
 
-            <div>
-                <label>Content (HTML support enabled)</label>
-                <textarea 
-                    name="content" 
-                    value={formData.content} 
-                    onChange={handleChange} 
-                    rows={15} 
-                    className="font-mono text-sm leading-relaxed"
-                />
-                <p className="text-xs text-gray-400 mt-2">Use plain HTML tags for formatting. &lt;p&gt;, &lt;h2&gt;, &lt;img src="..."&gt;</p>
+            <div className="space-y-4">
+                <label>Fecha</label>
+                <input type="date" name="date" value={formData.date} onChange={handleChange} required className="w-full bg-transparent border-b border-gray-300 py-2 focus:outline-none focus:border-black transition" />
             </div>
 
-            <div className="flex justify-between pt-8 border-t">
-                {initialData ? (
-                    <button type="button" onClick={handleDelete} className="text-red-500 hover:text-red-700 text-sm uppercase">Delete Post</button>
-                ) : <div />}
-                
-                <button type="submit" disabled={loading} className="btn bg-black text-white px-8">
-                    {loading ? 'Saving...' : 'Save Story'}
+            <div className="space-y-4">
+                <label>Extracto (Resumen)</label>
+                <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} rows={3} className="w-full bg-transparent border border-gray-200 p-4 focus:outline-none focus:border-black transition resize-none" placeholder="La primer entrada del blog" />
+            </div>
+
+            <div className="space-y-4">
+                <label>Contenido (Soporta HTML)</label>
+                <textarea name="content" value={formData.content} onChange={handleChange} rows={15} required className="w-full bg-transparent border border-gray-200 p-4 focus:outline-none focus:border-black transition font-mono text-sm" placeholder="Blog de <mark>prueba</mark>" />
+                <p className="text-xs text-gray-400">Usa etiquetas HTML simples. &lt;p&gt;, &lt;h2&gt;, &lt;img src=&quot;...&quot;&gt;</p>
+            </div>
+
+            <div className="space-y-4">
+                <label>Imagen de Portada</label>
+                <div className="border border-dashed p-8 text-center relative hover:bg-gray-50 transition cursor-pointer">
+                    <input type="file" onChange={handleImageUpload} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+                    {formData.coverImage ? (
+                        <img src={formData.coverImage} className="max-h-48 mx-auto shadow-sm" alt="Vista Previa" />
+                    ) : (
+                            <div className="space-y-2">
+                                <span className="text-gray-400 text-sm">Clic para subir imagen</span>
+                                <p className="text-xs text-gray-300">Max 1920px. Auto-optimizado a WebP</p>
+                            </div>
+                    )}
+                    {uploadStatus && (
+                        <div className="absolute inset-0 bg-white/90 flex items-center justify-center font-bold text-sm text-[var(--accent)] animate-pulse">
+                            {uploadStatus}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex justify-end gap-4 pt-8 border-t border-gray-100">
+                {initialData && (
+                    <button type="button" onClick={handleDelete} className="px-8 py-3 bg-red-50 text-red-500 hover:bg-red-100 transition text-sm tracking-widest uppercase">
+                        Eliminar
+                    </button>
+                )}
+                <button type="submit" disabled={loading} className="bg-black text-white px-8 py-3 hover:bg-gray-800 transition text-sm tracking-widest uppercase disabled:opacity-50">
+                    {loading ? "Guardando..." : "Guardar Historia"}
                 </button>
             </div>
         </form>

@@ -2,8 +2,8 @@ import { getAllPosts } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function Home() {
-  const posts = getAllPosts();
+export default async function Home() {
+  const posts = await getAllPosts();
 
   return (
     <div className="container">
@@ -12,8 +12,8 @@ export default function Home() {
         <div className="relative w-full h-[60vh] bg-gray-100 flex items-center justify-center overflow-hidden mb-8 group">
            {/* Placeholder for a hero image if we had one. For now, a typographic hero. */}
            <div className="z-10 bg-white/80 p-12 backdrop-blur-sm border border-[var(--foreground)]">
-              <h2 className="text-5xl md:text-7xl mb-4 italic">The September Issue</h2>
-              <p className="uppercase tracking-widest text-sm">Curated visual stories</p>
+            <h2 className="text-5xl md:text-7xl mb-4 italic">La Edición de Septiembre</h2>
+            <p className="uppercase tracking-widest text-sm">Historias visuales curadas</p>
            </div>
         </div>
       </section>
@@ -33,7 +33,7 @@ export default function Home() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-[var(--border)] uppercase tracking-widest">
-                    No Image
+                      Sin Imagen
                   </div>
                 )}
               </div>

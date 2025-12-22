@@ -3,14 +3,12 @@ import { getPostBySlug } from "@/lib/api";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-    params: {
-        slug: string;
-    }
+    params: Promise<any>
 }
 
 export default async function EditPostPage({ params }: PageProps) {
     const { slug } = await params;
-    const post = getPostBySlug(slug);
+    const post = await getPostBySlug(slug);
 
     if (!post) {
         notFound();

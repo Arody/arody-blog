@@ -1,25 +1,19 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
- 
-export function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  
-  // Protect /admin routes
-  if (path.startsWith('/admin')) {
-      // Allow access to login page
-      if (path === '/admin/login') {
-          return NextResponse.next();
-      }
+import { type NextRequest } from 'next/server'
+import { updateSession } from '@/utils/supabase/middleware'
 
-      const token = request.cookies.get('admin_token');
-      if (!token) {
-          return NextResponse.redirect(new URL('/admin/login', request.url));
-      }
-  }
-
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return await updateSession(request)
 }
- 
+
 export const config = {
-  matcher: '/admin/:path*',
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

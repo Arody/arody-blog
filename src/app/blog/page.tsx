@@ -2,8 +2,8 @@ import { getAllPosts } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function BlogIndex() {
-  const posts = getAllPosts();
+export default async function BlogIndex() {
+  const posts = await getAllPosts();
 
   return (
     <div className="container py-12">

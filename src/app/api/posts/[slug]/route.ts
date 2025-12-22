@@ -2,9 +2,7 @@ import { getPostBySlug, createOrUpdatePost, deletePost } from "@/lib/api";
 import { NextResponse } from "next/server";
 
 interface RouteProps {
-    params: {
-        slug: string
-    }
+    params: Promise<any>
 }
 
 export async function GET(request: Request, { params }: RouteProps) {

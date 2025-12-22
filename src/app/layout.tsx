@@ -17,8 +17,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Arody Blog | Photography",
-  description: "A portfolio and blog of curated photography.",
+  title: "Arody Blog | Fotografía",
+  description: "Portafolio y blog de fotografía curada.",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col`}>
         <Header />
         <main className="flex-grow">

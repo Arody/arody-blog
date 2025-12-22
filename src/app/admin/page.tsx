@@ -4,8 +4,8 @@ import Link from "next/link";
 // We force dynamic rendering so the list is always fresh on load
 export const dynamic = 'force-dynamic';
 
-export default function AdminDashboard() {
-  const posts = getAllPosts();
+export default async function AdminDashboard() {
+  const posts = await getAllPosts();
 
   return (
     <div className="container max-w-5xl mx-auto">

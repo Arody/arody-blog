@@ -1,9 +1,7 @@
-import fs from 'fs';
-import path from 'path';
-
-const postsDirectory = path.join(process.cwd(), 'src/content/posts');
+import { supabase } from './supabase';
 
 export interface Post {
+  id?: string;
   slug: string;
   title: string;
   excerpt: string;
@@ -12,46 +10,70 @@ export interface Post {
   content: string; // HTML or Markdown content
 }
 
-export function getPostSlugs() {
-  if (!fs.existsSync(postsDirectory)) {
-    return [];
-  }
-  return fs.readdirSync(postsDirectory).filter(file => file.endsWith('.json'));
+export const getPostSlugs = async () => {
+  const { data } = await supabase.from('posts').select('slug');
+  return data?.map(p => p.slug) || [];
 }
 
-export function getPostBySlug(slug: string): Post | null {
-  const realSlug = slug.replace(/\.json$/, '');
-  const fullPath = path.join(postsDirectory, `${realSlug}.json`);
-  
-  if (!fs.existsSync(fullPath)) {
-    return null;
-  }
+export const getPostBySlug = async (slug: string): Promise<Post | null> => {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('slug', slug)
+    .single();
 
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const post = JSON.parse(fileContents);
-  return { ...post, slug: realSlug };
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    slug: data.slug,
+    title: data.title,
+    excerpt: data.excerpt,
+    coverImage: data.cover_image, // Map snake_case to camelCase
+    date: data.date,
+    content: data.content,
+  };
 }
 
-export function getAllPosts(): Post[] {
-  const slugs = getPostSlugs();
-  const posts = slugs
-    .map((slug) => getPostBySlug(slug))
-    .filter((post): post is Post => post !== null)
-    .sort((post1, post2) => (post1.date > post2.date ? -1 : 1));
-  return posts;
+export const getAllPosts = async (): Promise<Post[]> => {
+  const { data } = await supabase
+    .from('posts')
+    .select('*')
+    .order('date', { ascending: false });
+
+  return (data || []).map(p => ({
+    slug: p.slug,
+    title: p.title,
+    excerpt: p.excerpt,
+    coverImage: p.cover_image,
+    date: p.date,
+    content: p.content,
+  }));
 }
 
-export function createOrUpdatePost(post: Post) {
-  if (!fs.existsSync(postsDirectory)) {
-    fs.mkdirSync(postsDirectory, { recursive: true });
-  }
-  const fullPath = path.join(postsDirectory, `${post.slug}.json`);
-  fs.writeFileSync(fullPath, JSON.stringify(post, null, 2), 'utf8');
+export const createOrUpdatePost = async (post: Post) => {
+  const dbPost = {
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    cover_image: post.coverImage,
+    date: post.date,
+    content: post.content,
+  };
+
+  // Upsert based on slug? no, slug is unique index.
+  const { error } = await supabase
+    .from('posts')
+    .upsert(dbPost, { onConflict: 'slug' });
+
+  if (error) throw error;
 }
 
-export function deletePost(slug: string) {
-    const fullPath = path.join(postsDirectory, `${slug}.json`);
-    if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
-    }
+export const deletePost = async (slug: string) => {
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('slug', slug);
+
+  if (error) throw error;
 }
