@@ -1,6 +1,7 @@
 import { getAllPosts } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
+import ShareWidget from "@/components/ShareWidget";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export default async function Home() {
       <section className="mb-20 text-center">
         <div className="relative w-full h-[60vh] bg-gray-100 flex items-center justify-center overflow-hidden mb-8 group">
            {/* Placeholder for a hero image if we had one. For now, a typographic hero. */}
-           <div className="z-10 bg-white/80 p-12 backdrop-blur-sm border border-[var(--foreground)]">
+          <div className="z-10 bg-white/80 p-12 backdrop-blur-sm border border-black text-black">
             <h2 className="text-5xl md:text-7xl mb-4 italic">La Edición de {new Date().getMonth() + 1 }</h2>
             <p className="uppercase tracking-widest text-sm">Historias visuales curadas</p>
            </div>
@@ -38,6 +39,10 @@ export default async function Home() {
                       Sin Imagen
                   </div>
                 )}
+                {/* Share Widget */}
+                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <ShareWidget slug={post.slug} title={post.title} />
+                </div>
               </div>
               
               <div className="text-center">

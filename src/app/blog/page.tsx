@@ -1,6 +1,7 @@
 import { getAllPosts } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
+import ShareWidget from "@/components/ShareWidget";
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,9 @@ export default async function BlogIndex() {
                       Sin Imagen
                   </div>
                 )}
+                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <ShareWidget slug={post.slug} title={post.title} />
+                </div>
               </div>
               
               <div className="text-center">

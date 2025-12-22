@@ -11,7 +11,7 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto px-6 pb-20">
             <h1 className="text-4xl md:text-5xl font-serif italic mb-12 text-center">Sobre mí</h1>
 
-            <div className="prose prose-lg mx-auto font-serif text-gray-800 leading-relaxed">
+            <div className="prose prose-lg mx-auto font-serif text-[var(--foreground)] leading-relaxed">
                 <p>
                     Soy Arody. Casado con Marisela. Fotógrafo por obsesión visual, ingeniero por deformación profesional y creativo porque no me quedó de otra.
                 </p>
