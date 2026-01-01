@@ -2,7 +2,8 @@ import { getPostBySlug } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Metadata } from "next";
-import ShareWidget from "@/components/ShareWidget";
+import PostReader from "@/components/PostReader";
+
 
 
 interface PageProps {
@@ -80,14 +81,9 @@ export default async function BlogPost({ params }: PageProps) {
                 )}
             </header>
 
-            <div 
-                className="prose prose-lg mx-auto font-serif first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-3 first-letter:mt-[-10px]"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+            <PostReader content={post.content} />
 
-            <div className="max-w-2xl mx-auto mt-12">
-                <ShareWidget slug={slug} title={post.title} location="post" />
-            </div>
+
 
         </article>
     );

@@ -7,7 +7,7 @@ export default function Header() {
       <div className="container flex flex-col items-center justify-between md:flex-row">
         <nav className="flex gap-6 text-sm uppercase tracking-widest text-[var(--accent)] mb-4 md:mb-0">
           <Link href="/" className="hover:text-[var(--foreground)] transition-colors">Inicio</Link>
-          <Link href="/blog" className="hover:text-[var(--foreground)] transition-colors">Historias</Link>
+
           <Link href="/about" className="hover:text-[var(--foreground)] transition-colors">Sobre mí</Link>
         </nav>
 
