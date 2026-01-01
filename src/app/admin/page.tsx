@@ -10,7 +10,7 @@ export default async function AdminDashboard() {
   return (
     <div className="container max-w-5xl mx-auto">
       <header className="flex justify-between items-center mb-10">
-        <h1 className="text-3xl font-serif">Dashboard</h1>
+        <h1 className="text-3xl font-serif">Panel de Control</h1>
         <Link href="/admin/editor" className="btn">
           + Nueva historia
         </Link>
@@ -18,7 +18,7 @@ export default async function AdminDashboard() {
 
       <div className="bg-white border text-sm">
         <div className="grid grid-cols-12 p-4 border-b font-bold bg-gray-50 uppercase tracking-wide text-xs">
-          <div className="col-span-6">Titulo</div>
+          <div className="col-span-6">Título</div>
           <div className="col-span-3">Fecha</div>
           <div className="col-span-3 text-right">Acciones</div>
         </div>

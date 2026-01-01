@@ -208,7 +208,7 @@ export default function PostEditor({ initialData }: PostEditorProps) {
 
             <div className="space-y-4">
                 <label>Extracto (Resumen)</label>
-                <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} rows={3} className="w-full bg-transparent border border-gray-200 p-4 focus:outline-none focus:border-black transition resize-none" placeholder="La primer entrada del blog" />
+                <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} rows={3} className="w-full bg-transparent border border-gray-200 p-4 focus:outline-none focus:border-black transition resize-none" placeholder="La primera entrada del blog" />
             </div>
 
             <div className="space-y-4">

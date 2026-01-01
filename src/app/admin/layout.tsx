@@ -29,12 +29,12 @@ export default async function AdminLayout({
   // Let's use a Middleware file for the entire /admin route. It's properly Next.js.
   
   return (
-      <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col admin-area">
         <nav className="bg-black text-white p-4 flex justify-between items-center">
-            <Link href="/admin" className="font-serif text-xl">ARODY Admin</Link>
+        <Link href="/admin" className="font-serif text-xl">Admin Arody</Link>
             <div className="flex gap-4 text-sm uppercase">
-               <Link href="/" target="_blank">View Site</Link>
-               <Link href="/admin/editor">New Post</Link>
+          <Link href="/" target="_blank">Ver Sitio</Link>
+          <Link href="/admin/editor">Nueva Historia</Link>
             </div>
         </nav>
         <main className="flex-grow bg-gray-50 p-6">

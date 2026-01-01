@@ -13,10 +13,19 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ffffff;
-      --accent: #d4d4d4;
+    --accent: #d4d4d4;
     --light-gray: #1a1a1a;
     --border: #333333;
   }
+}
+
+.admin-area {
+  --background: #ffffff;
+  --foreground: #000000;
+  --accent: #555555;
+  --light-gray: #f4f4f4;
+  --border: #e0e0e0;
+  color: var(--foreground);
 }
 
 @layer base {
