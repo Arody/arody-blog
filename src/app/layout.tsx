@@ -17,8 +17,27 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Arody Blog | Fotografía",
+  metadataBase: new URL('https://arody.cloud'),
+  title: {
+    default: "Arody Blog | Fotografía",
+    template: "%s | Arody"
+  },
   description: "Portafolio y blog de fotografía curada.",
+  openGraph: {
+    title: "Arody Blog",
+    description: "Portafolio y blog de fotografía curada.",
+    url: 'https://arody.cloud',
+    siteName: 'Arody Fotografía',
+    images: [
+      {
+        url: '/arody-portrait.jpg', // Default fallback image from public
+        width: 1200,
+        height: 630,
+      }
+    ],
+    locale: 'es_MX',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
