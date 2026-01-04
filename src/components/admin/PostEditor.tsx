@@ -108,7 +108,7 @@ export default function PostEditor({ initialData }: PostEditorProps) {
             // IDs
             const timestamp = Date.now();
             const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '');
-            const filenameMain = `${timestamp}-${cleanName}.jpg`;
+            const filenameMain = `${timestamp}-${cleanName}_main.jpg`;
             const filenameSocial = `${timestamp}-${cleanName}_social.jpg`;
 
             setUploadStatus("Subiendo imágenes...");

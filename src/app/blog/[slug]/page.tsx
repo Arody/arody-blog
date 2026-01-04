@@ -23,11 +23,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         finalUrl = `https://arody.cloud${finalUrl}`;
     }
 
-    // Attempt to use the _social variant if it's a Supabase upload
-    // Convention: filename.jpg -> filename_social.jpg
+    // Attempt to use the _social variant ONLY if we detect the new naming convention (_main.jpg)
+    // This prevents 404s on old images that don't have a social companion.
     let socialUrl = finalUrl;
-    if (finalUrl.includes('supabase') || finalUrl.includes('uploads')) {
-        socialUrl = finalUrl.replace('.jpg', '_social.jpg');
+    if (finalUrl.includes('_main.jpg')) {
+        socialUrl = finalUrl.replace('_main.jpg', '_social.jpg');
     }
 
     return {
