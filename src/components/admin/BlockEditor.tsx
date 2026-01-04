@@ -23,6 +23,7 @@ import {
     Plus, Type, Heading1, Quote as QuoteIcon, ImageIcon, 
     MoreHorizontal, X, GripVertical, Trash2
 } from 'lucide-react';
+import RichTextEditor from './RichTextEditor';
 
 // --- Types ---
 
@@ -90,12 +91,11 @@ function SortableBlock({
                 </button>
 
                 {block.type === 'paragraph' && (
-                    <textarea
-                        value={block.content}
-                        onChange={(e) => onUpdate(block.id, e.target.value)}
-                        className="w-full bg-transparent p-2 focus:outline-none rounded resize-none text-lg leading-relaxed font-serif"
+                    <RichTextEditor
+                        content={block.content}
+                        onChange={(html) => onUpdate(block.id, html)}
+                        className="w-full rounded text-lg leading-relaxed font-serif"
                         placeholder="Write your story..."
-                        rows={Math.max(2, block.content.split('\n').length)}
                     />
                 )}
 
@@ -180,14 +180,26 @@ export default function BlockEditor({ initialContent, onChange }: BlockEditorPro
              const tempDiv = document.createElement('div');
              tempDiv.innerHTML = initialContent;
              
-             Array.from(tempDiv.children).forEach((node) => {
+            Array.from(tempDiv.childNodes).forEach((node) => {
                 const id = crypto.randomUUID();
-                if (node.tagName === 'P') newBlocks.push({ id, type: 'paragraph', content: node.innerHTML });
-                else if (['H1','H2','H3'].includes(node.tagName)) newBlocks.push({ id, type: 'heading', content: node.innerHTML });
-                else if (node.tagName === 'BLOCKQUOTE') newBlocks.push({ id, type: 'quote', content: node.innerHTML });
-                else if (node.tagName === 'IMG') newBlocks.push({ id, type: 'image', content: (node as HTMLImageElement).src });
-                else if (node.tagName === 'HR') newBlocks.push({ id, type: 'divider', content: '' });
-                else newBlocks.push({ id, type: 'paragraph', content: node.outerHTML });
+
+                 // Handle Text Nodes
+                 if (node.nodeType === Node.TEXT_NODE) {
+                     const textContent = node.textContent?.trim();
+                     if (textContent) {
+                         newBlocks.push({ id, type: 'paragraph', content: node.textContent || '' });
+                     }
+                     return;
+                 }
+
+                 // Handle Elements
+                 const element = node as HTMLElement;
+                 if (element.tagName === 'P') newBlocks.push({ id, type: 'paragraph', content: element.innerHTML });
+                 else if (['H1', 'H2', 'H3'].includes(element.tagName)) newBlocks.push({ id, type: 'heading', content: element.innerHTML });
+                 else if (element.tagName === 'BLOCKQUOTE') newBlocks.push({ id, type: 'quote', content: element.innerHTML });
+                 else if (element.tagName === 'IMG') newBlocks.push({ id, type: 'image', content: (element as HTMLImageElement).src });
+                 else if (element.tagName === 'HR') newBlocks.push({ id, type: 'divider', content: '' });
+                 else newBlocks.push({ id, type: 'paragraph', content: element.outerHTML });
              });
              
              if (newBlocks.length === 0 && initialContent) {

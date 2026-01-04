@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Metadata } from "next";
 import PostReader from "@/components/PostReader";
+import CommentSection from "@/components/CommentSection";
 
 
 
@@ -16,7 +17,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!post) return {};
 
-    const imageUrl = post.coverImage || '/arody-portrait.jpg';
+    // Ensure absolute URL
+    let imageUrl = post.coverImage || '/arody-portrait.jpg';
+    if (imageUrl.startsWith('/')) {
+        imageUrl = `https://arody.cloud${imageUrl}`;
+    }
 
     return {
         title: post.title,
@@ -29,8 +34,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             images: [
                 {
                     url: imageUrl,
-                    width: 1200,
-                    height: 630,
                     alt: post.title,
                 }
             ],
@@ -85,6 +88,8 @@ export default async function BlogPost({ params }: PageProps) {
             </header>
 
             <PostReader content={post.content} />
+
+            {post.id && <CommentSection postId={post.id} />}
 
 
 

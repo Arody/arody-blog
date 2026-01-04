@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import BlockEditor from "./BlockEditor";
+import { Code, LayoutTemplate } from "lucide-react";
 
 interface PostEditorProps {
     initialData?: {
@@ -19,6 +20,7 @@ interface PostEditorProps {
 export default function PostEditor({ initialData }: PostEditorProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [editorMode, setEditorMode] = useState<'blocks' | 'html'>('blocks');
     const [uploadStatus, setUploadStatus] = useState<string>("");
     const [formData, setFormData] = useState({
         title: initialData?.title || "",
@@ -95,6 +97,10 @@ export default function PostEditor({ initialData }: PostEditorProps) {
             alert(`Fallo en la subida: ${message}`);
         }
     };
+
+    const handleContentChange = useCallback((html: string) => {
+        setFormData(prev => ({ ...prev, content: html }));
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -212,12 +218,44 @@ export default function PostEditor({ initialData }: PostEditorProps) {
             </div>
 
             <div className="space-y-4">
-                <label>Contenido</label>
+                <label className="flex items-center justify-between">
+                    <span>Contenido</span>
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                            type="button"
+                            onClick={() => setEditorMode('blocks')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition ${editorMode === 'blocks' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
+                        >
+                            <LayoutTemplate size={14} />
+                            Bloques
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setEditorMode('html')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition ${editorMode === 'html' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
+                        >
+                            <Code size={14} />
+                            HTML
+                        </button>
+                    </div>
+                </label>
                 <div className="border border-gray-200 rounded-lg p-4 min-h-[400px]">
-                    <BlockEditor
-                        initialContent={initialData?.content || ""}
-                        onChange={useCallback((html: string) => setFormData((prev: any) => ({ ...prev, content: html })), [])}
-                    />
+                    {editorMode === 'blocks' ? (
+                        <BlockEditor
+                            // Force re-mount when switching back to blocks to re-parse HTML
+                            key="block-editor"
+                            initialContent={formData.content}
+                            onChange={handleContentChange}
+                        />
+                    ) : (
+                        <textarea
+                            name="content"
+                            value={formData.content}
+                            onChange={handleChange}
+                            className="w-full h-[500px] font-mono text-sm bg-gray-50 p-4 rounded focus:outline-none resize-none"
+                            placeholder="<p>Escribe tu HTML aquí...</p>"
+                        />
+                    )}
                 </div>
             </div>
 
