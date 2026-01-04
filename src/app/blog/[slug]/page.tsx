@@ -17,19 +17,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!post) return {};
 
-    const imageUrl = post.coverImage || '/arody-portrait.jpg';
-    let finalUrl = imageUrl;
-    if (finalUrl.startsWith('/')) {
-        finalUrl = `https://arody.cloud${finalUrl}`;
-    }
-
-    // Attempt to use the _social variant ONLY if we detect the new naming convention (_main.jpg)
-    // This prevents 404s on old images that don't have a social companion.
-    let socialUrl = finalUrl;
-    if (finalUrl.includes('_main.jpg')) {
-        socialUrl = finalUrl.replace('_main.jpg', '_social.jpg');
-    }
-
     return {
         title: post.title,
         description: post.excerpt,
@@ -38,15 +25,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             description: post.excerpt,
             url: `https://arody.cloud/blog/${slug}`,
             siteName: 'Arody Fotografía',
-            images: [
-                {
-                    url: socialUrl, // Use the optimized 1200x630 variant
-                    width: 1200,
-                    height: 630,
-                    type: 'image/jpeg',
-                    alt: post.title,
-                }
-            ],
             locale: 'es_MX',
             type: 'article',
         },
@@ -54,7 +32,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             card: 'summary_large_image',
             title: post.title,
             description: post.excerpt,
-            images: [socialUrl],
         }
     };
 }
