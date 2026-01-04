@@ -17,6 +17,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!post) return {};
 
+    const imageUrl = post.coverImage || '/arody-portrait.jpg';
+    let finalUrl = imageUrl;
+
+    // Ensure absolute URL
+    if (finalUrl.startsWith('/')) {
+        finalUrl = `https://arody.cloud${finalUrl}`;
+    }
+
+    // Force HTTPS if it's missing (rare but possible)
+    if (!finalUrl.startsWith('http')) {
+        finalUrl = `https://${finalUrl}`;
+    }
+
     return {
         title: post.title,
         description: post.excerpt,
@@ -25,6 +38,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             description: post.excerpt,
             url: `https://arody.cloud/blog/${slug}`,
             siteName: 'Arody Fotografía',
+            images: [
+                {
+                    url: finalUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                }
+            ],
             locale: 'es_MX',
             type: 'article',
         },
@@ -32,6 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             card: 'summary_large_image',
             title: post.title,
             description: post.excerpt,
+            images: [finalUrl],
         }
     };
 }
