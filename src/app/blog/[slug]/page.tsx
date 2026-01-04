@@ -23,18 +23,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         finalUrl = `https://arody.cloud${finalUrl}`;
     }
 
-    let width = 1200;
-    let height = 630;
-
-    try {
-        if (post.coverImage) {
-            const probe = await import('probe-image-size');
-            const result = await probe.default(finalUrl);
-            width = result.width;
-            height = result.height;
-        }
-    } catch (e) {
-        console.error("Error probing image size", e);
+    // Attempt to use the _social variant if it's a Supabase upload
+    // Convention: filename.jpg -> filename_social.jpg
+    let socialUrl = finalUrl;
+    if (finalUrl.includes('supabase') || finalUrl.includes('uploads')) {
+        socialUrl = finalUrl.replace('.jpg', '_social.jpg');
     }
 
     return {
@@ -47,9 +40,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             siteName: 'Arody Fotografía',
             images: [
                 {
-                    url: finalUrl,
-                    width: width,
-                    height: height,
+                    url: socialUrl, // Use the optimized 1200x630 variant
+                    width: 1200,
+                    height: 630,
                     type: 'image/jpeg',
                     alt: post.title,
                 }
@@ -61,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             card: 'summary_large_image',
             title: post.title,
             description: post.excerpt,
-            images: [finalUrl],
+            images: [socialUrl],
         }
     };
 }

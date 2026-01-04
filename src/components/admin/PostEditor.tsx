@@ -41,59 +41,110 @@ export default function PostEditor({ initialData }: PostEditorProps) {
         }));
     };
 
+    const createSocialImage = async (file: File): Promise<File> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1200;
+                canvas.height = 630;
+                const ctx = canvas.getContext('2d');
+
+                if (!ctx) return;
+
+                // White background
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Calculate dimensions to cover the canvas (Center Crop / Cover)
+                const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+                const x = (canvas.width / 2) - (img.width / 2) * scale;
+                const y = (canvas.height / 2) - (img.height / 2) * scale;
+
+                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(new File([blob], "social.jpg", { type: "image/jpeg" }));
+                    }
+                }, 'image/jpeg', 0.9);
+            };
+        });
+    };
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.[0]) return;
         
         const file = e.target.files[0];
-        setUploadStatus("Optimizando imagen...");
+        setUploadStatus("Procesando imágenes...");
 
         try {
-            // Dynamic import to avoid SSR issues with browser libraries
             const imageCompression = (await import("browser-image-compression")).default;
 
-            const options = {
-                maxSizeMB: 0.07, // Max 70KB
-                maxWidthOrHeight: 1200, // Reduced resolution to ensure size target
+            // 1. Optimize Main Image (Visual on Blog)
+            const mainOptions = {
+                maxSizeMB: 0.1, // ~100KB for main image
+                maxWidthOrHeight: 1200, 
                 useWebWorker: true,
                 fileType: "image/jpeg"
             };
+            const compressedMain = await imageCompression(file, mainOptions);
 
-            const compressedFile = await imageCompression(file, options);
+            // 2. Generate Social Image (1200x630 Fixed for OG)
+            // We optimize the *original* file first to a reasonable size to avoid canvas memory issues if it's huge, 
+            // OR just use the original if browser can handle it. Let's use the compressedMain as source for reliability?
+            // Actually, better to use original to avoid double artifacting, but safety first.
+            // Let's us a fast intermediate resize if needed, but original is fine for canvas usually.
+            const socialFileBlob = await createSocialImage(file);
+            // Compress the social image strictly to <50KB for WhatsApp speed
+            const compressedSocial = await imageCompression(socialFileBlob, {
+                maxSizeMB: 0.05, // Max 50KB for instant preview
+                maxWidthOrHeight: 1200,
+                useWebWorker: true,
+                fileType: "image/jpeg"
+            });
 
-            // Generate unique filename with .jpg extension
-            const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '')}.jpg`;
+            // IDs
+            const timestamp = Date.now();
+            const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '');
+            const filenameMain = `${timestamp}-${cleanName}.jpg`;
+            const filenameSocial = `${timestamp}-${cleanName}_social.jpg`;
 
-            setUploadStatus("Subiendo a la nube...");
+            setUploadStatus("Subiendo imágenes...");
 
             const { createClient } = await import("@/utils/supabase/client");
             const supabase = createClient();
 
-            const { data, error } = await supabase.storage
+            // Upload Main
+            const uploadMain = supabase.storage
                 .from('uploads')
-                .upload(filename, compressedFile, {
-                    contentType: 'image/jpeg',
-                    upsert: false // Don't overwrite
-                });
+                .upload(filenameMain, compressedMain, { contentType: 'image/jpeg', upsert: false });
 
-            if (error) throw error;
+            // Upload Social
+            const uploadSocial = supabase.storage
+                .from('uploads')
+                .upload(filenameSocial, compressedSocial, { contentType: 'image/jpeg', upsert: false });
 
-            // Get public URL
+            const [resultMain, resultSocial] = await Promise.all([uploadMain, uploadSocial]);
+
+            if (resultMain.error) throw resultMain.error;
+            if (resultSocial.error) throw resultSocial.error;
+
+            // Get public URL (Main)
             const { data: { publicUrl } } = supabase.storage
                 .from('uploads')
-                .getPublicUrl(filename);
+                .getPublicUrl(filenameMain);
 
             setFormData(prev => ({ ...prev, coverImage: publicUrl }));
-            setUploadStatus(""); // Clear status on success
+            setUploadStatus(""); 
 
         } catch (err: any) {
             console.error("Upload error details:", err);
-            setUploadStatus(""); // Clear status on error
+            setUploadStatus(""); 
 
             let message = err.message || "Error desconocido";
             if (err.statusCode === 0) message = "Error de Red/CORS. Revisa Supabase.";
-            if (err.statusCode === 403) message = "Permiso Denegado.";
-            if (err.statusCode === 404) message = "Bucket no encontrado.";
-
             alert(`Fallo en la subida: ${message}`);
         }
     };
