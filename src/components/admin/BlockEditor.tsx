@@ -333,14 +333,14 @@ function ImageUploader({ onUpload }: { onUpload: (url: string) => void }) {
             setStatus("Optimizando...");
             const file = e.target.files[0];
             const imageCompression = (await import("browser-image-compression")).default;
-            const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true, fileType: "image/webp" });
+            const compressedFile = await imageCompression(file, { maxSizeMB: 0.07, maxWidthOrHeight: 1200, useWebWorker: true, fileType: "image/jpeg" });
             
             setStatus("Subiendo...");
-            const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
+            const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
             const { createClient } = await import("@/utils/supabase/client");
             const supabase = createClient();
             
-            const { error } = await supabase.storage.from('uploads').upload(filename, compressedFile, { contentType: 'image/webp' });
+            const { error } = await supabase.storage.from('uploads').upload(filename, compressedFile, { contentType: 'image/jpeg' });
             if (error) throw error;
             
             const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filename);

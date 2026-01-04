@@ -52,16 +52,16 @@ export default function PostEditor({ initialData }: PostEditorProps) {
             const imageCompression = (await import("browser-image-compression")).default;
 
             const options = {
-                maxSizeMB: 0.5, // Max 500KB
-                maxWidthOrHeight: 1920,
+                maxSizeMB: 0.07, // Max 70KB
+                maxWidthOrHeight: 1200, // Reduced resolution to ensure size target
                 useWebWorker: true,
-                fileType: "image/webp"
+                fileType: "image/jpeg"
             };
 
             const compressedFile = await imageCompression(file, options);
 
-            // Generate unique filename with .webp extension
-            const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
+            // Generate unique filename with .jpg extension
+            const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '')}.jpg`;
 
             setUploadStatus("Subiendo a la nube...");
 
@@ -71,7 +71,7 @@ export default function PostEditor({ initialData }: PostEditorProps) {
             const { data, error } = await supabase.storage
                 .from('uploads')
                 .upload(filename, compressedFile, {
-                    contentType: 'image/webp',
+                    contentType: 'image/jpeg',
                     upsert: false // Don't overwrite
                 });
 
@@ -268,7 +268,7 @@ export default function PostEditor({ initialData }: PostEditorProps) {
                     ) : (
                             <div className="space-y-2">
                                 <span className="text-gray-400 text-sm">Clic para subir imagen</span>
-                                <p className="text-xs text-gray-300">Max 1920px. Auto-optimizado a WebP</p>
+                                <p className="text-xs text-gray-300">Max 1200px / 70kb. Auto-optimizado a JPG</p>
                             </div>
                     )}
                     {uploadStatus && (
