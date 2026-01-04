@@ -33,6 +33,7 @@ export const metadata: Metadata = {
         url: '/arody-portrait.jpg', // Default fallback image from public
         width: 1200,
         height: 630,
+        type: 'image/jpeg',
       }
     ],
     locale: 'es_MX',

@@ -17,10 +17,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!post) return {};
 
-    // Ensure absolute URL
-    let imageUrl = post.coverImage || '/arody-portrait.jpg';
-    if (imageUrl.startsWith('/')) {
-        imageUrl = `https://arody.cloud${imageUrl}`;
+    const imageUrl = post.coverImage || '/arody-portrait.jpg';
+    let finalUrl = imageUrl;
+    if (finalUrl.startsWith('/')) {
+        finalUrl = `https://arody.cloud${finalUrl}`;
+    }
+
+    let width = 1200;
+    let height = 630;
+
+    try {
+        if (post.coverImage) {
+            const probe = await import('probe-image-size');
+            const result = await probe.default(finalUrl);
+            width = result.width;
+            height = result.height;
+        }
+    } catch (e) {
+        console.error("Error probing image size", e);
     }
 
     return {
@@ -33,7 +47,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             siteName: 'Arody Fotografía',
             images: [
                 {
-                    url: imageUrl,
+                    url: finalUrl,
+                    width: width,
+                    height: height,
+                    type: 'image/jpeg',
                     alt: post.title,
                 }
             ],
@@ -44,7 +61,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             card: 'summary_large_image',
             title: post.title,
             description: post.excerpt,
-            images: [imageUrl],
+            images: [finalUrl],
         }
     };
 }
